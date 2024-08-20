@@ -1,0 +1,32 @@
+{
+  "name": "ll-task-bot-24-25",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "NODE_ENV=dev nodemon ./app.js",
+    "start": "NODE_ENV=production node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkuzmick/ll-task-bot-24-25.git"
+  },
+  "author": "mk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mkuzmick/ll-task-bot-24-25/issues"
+  },
+  "homepage": "https://github.com/mkuzmick/ll-task-bot-24-25#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.25.0",
+    "@slack/bolt": "^3.19.0",
+    "airtable": "^0.12.2",
+    "axios": "^1.7.3",
+    "dotenv": "^16.4.5",
+    "learninglab-log": "^1.0.2",
+    "node-cron": "^3.0.3",
+    "openai": "^4.54.0",
+    "yargs": "^17.7.2"
+  }
+}
