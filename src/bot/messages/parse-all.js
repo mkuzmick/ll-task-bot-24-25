@@ -2,29 +2,33 @@ const llog = require('learninglab-log');
 const at = require('../../utils/ll-airtable-tools');
 const OpenAI = require("openai");
 
-
 module.exports = async ({ client, message, say, event }) => {
-    llog.gray(message)
-    if (message.channel === process.env.SLACK_TASK_UTIL_CHANNEL || message.channel === process.env.SLACK_TASK_UTIL_CHANNEL_PROD) {
-        llog.yellow("got a task util message, going to create a task")
-        try {
+  llog.gray(message);
 
-            const task = await createTask(message);
-            llog.magenta("task:", task);
-            const taskRecord = await createTaskRecord({ data: task, assignedTo: findAssignedTo(message) });
-            llog.magenta("taskRecord:", taskRecord);
-            const slackResult = await client.chat.postMessage({
-              channel: message.channel,
-              thread_ts: message.ts,
-              text: `created a that task for you here: https://airtable.com/appN3NB28TdhG2S7x/tblHsMq7e2MwOiqsd/viwCGKl6UTQvUk3BV/${taskRecord.id}?blocks=hide\n\n*${task.Title}*\n\n${task.Notes}\n\n${task.TemporalStatus}`,
-            });
-        } catch (error) {
-            console.error(error)            
-        }
-    } else {
-        llog.magenta("got a message that is not a task util message")
-    }
-}
+  // Check if the message is in the main thread (i.e., it doesn't have a thread_ts)
+  if (!message.thread_ts) {
+      if (message.channel === process.env.SLACK_TASK_UTIL_CHANNEL || message.channel === process.env.SLACK_TASK_UTIL_CHANNEL_PROD) {
+          llog.yellow("got a task util message, going to create a task");
+          try {
+              const task = await createTask(message);
+              llog.magenta("task:", task);
+              const taskRecord = await createTaskRecord({ data: task, assignedTo: findAssignedTo(message) });
+              llog.magenta("taskRecord:", taskRecord);
+              const slackResult = await client.chat.postMessage({
+                channel: message.channel,
+                thread_ts: message.ts,
+                text: `created that task for you here: https://airtable.com/appN3NB28TdhG2S7x/tblHsMq7e2MwOiqsd/viwCGKl6UTQvUk3BV/${taskRecord.id}?blocks=hide\n\n*${task.Title}*\n\n${task.Notes}\n\n${task.TemporalStatus}`,
+              });
+          } catch (error) {
+              console.error(error);
+          }
+      } else {
+          llog.magenta("got a message that is not a task util message");
+      }
+  } else {
+      llog.magenta("skipping comment message (has thread_ts)");
+  }
+};
 
 const findAssignedTo = (message) => {
   // Step 1: Use regex to extract Slack IDs from the message text
@@ -51,15 +55,15 @@ const findAssignedTo = (message) => {
 
 
 
-const checkForUserMentions = (message) => {
-  // check for user mentions
-}
+// const checkForUserMentions = (message) => {
+//   // check for user mentions
+// }
 
-const checkForLinks = (elements) => {
-}
+// const checkForLinks = (elements) => {
+// }
 
-const getOgData = (link) => {
-}
+// const getOgData = (link) => {
+// }
 
 
 
@@ -73,6 +77,7 @@ const createTaskRecord = async ({ data, assignedTo }) => {
       AssignedTo: assignedTo,
       TemporalStatus: data.TemporalStatus,
       Notes: data.Notes,
+      OriginalText: data.OriginalText
     };
     llog.magenta("taskRecord:", taskRecord);
     try {
@@ -124,7 +129,7 @@ const createTask = async (message) => {
                   Notes: {
                     type: "string",
                     description:
-                      "A cleaned up and potentially expanded description of the task in nicely formatted markdown. Include any links, again with markdown formatting. At the end of the Notes section, include a series of 2-3 bullets as Taskbot Suggestions that are ChatGPT's thoughts on how to get started on the task.",
+                      "A cleaned up and potentially expanded description of the task in nicely formatted markdown. Include any links, again with markdown formatting.",
                   },
                   TemporalStatus: {
                     type: "string",
@@ -165,6 +170,7 @@ const createTask = async (message) => {
         const function_arguments = JSON.parse(
           openAiResult.choices[0].message.tool_calls[0].function.arguments,
         );
+        function_arguments.OriginalText = message.text;
         llog.yellow(function_arguments);
         return(function_arguments)
 
